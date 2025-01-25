@@ -1,0 +1,14 @@
+# Ignorar pastas e arquivos gerados pelo Visual Studio
+.vs/
+.idea/
+.vscode/
+*.vsix
+
+bin/
+obj/
+
+# Ignorar todos os arquivos appsettings
+appsettings*.json
+
+# Não ignorar o arquivo appsettings.Example.json
+!appsettings.Example.json
