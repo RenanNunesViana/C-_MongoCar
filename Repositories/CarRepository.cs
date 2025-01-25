@@ -11,9 +11,6 @@ namespace MongoDBCars.Repositories
         public CarRepository(IOptions<CarStoreDatabaseSettings> carStoreOpt)
         {
 
-            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
-            Console.WriteLine($"Ambiente atual: {environment}");
-
             if (carStoreOpt == null || carStoreOpt.Value == null)
             {
                 Console.WriteLine("carStoreOpt ou carStoreOpt.Value está nulo!");
@@ -21,35 +18,37 @@ namespace MongoDBCars.Repositories
             }
             else
             {
-                Console.WriteLine($"ConnectionString: {carStoreOpt.Value.ConnectionString}");
+                var mongoClient = new MongoClient(carStoreOpt.Value.ConnectionString);
+
+                var mongoDatabase = mongoClient.GetDatabase(carStoreOpt.Value.DatabaseName);
+
+                _carCollection = mongoDatabase.GetCollection<Car>(carStoreOpt.Value.CarsCollectionName);
             }
-
-            var mongoClient = new MongoClient(carStoreOpt.Value.ConnectionString);
-
-            var mongoDatabase = mongoClient.GetDatabase(carStoreOpt.Value.DatabaseName);
-
-            _carCollection = mongoDatabase.GetCollection<Car>(carStoreOpt.Value.CarsCollectionName);
         }
-        public Task DeleteCar(Car car)
+
+        public async Task Create(Car car)
         {
-            throw new NotImplementedException();
+            try
+            {
+                await _carCollection.InsertOneAsync(car);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
         }
 
-        public async Task<List<Car>> FindAll() => await _carCollection.Find(_ =>  true).ToListAsync();
+        public async Task DeleteCar(string id) => await _carCollection.DeleteOneAsync(c => c.Id!.Equals(id));
+
+        public async Task<List<Car>> FindAll() => await _carCollection.Find(_ => true).ToListAsync();
 
         public Task<List<Car>> FindByAnyThing(Action<Car> func)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Car> FindById(string id)
-        {
-            throw new NotImplementedException();
-        }
+        public async Task<Car?> FindById(string id) => await _carCollection.Find(c => c.Id!.Equals(id)).FirstOrDefaultAsync();
 
-        public Task<Car> UpdateCar(Car car)
-        {
-            throw new NotImplementedException();
-        }
+        public async Task UpdateCar(string id, Car updatedCar) => await _carCollection.ReplaceOneAsync(c => c.Id!.Equals(id), updatedCar);
     }
 }
