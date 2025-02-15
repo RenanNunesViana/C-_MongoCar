@@ -8,9 +8,9 @@ namespace MongoDBCars.Services.Car
 
         private readonly ICarRepository _carRepository = carRepository;
 
-        public async Task<Models.Car> CreateCar(string brand, string color, string owner)
+        public async Task<Models.Car> CreateCar(string brand, string carPlate, string color)
         {
-            var newCar = new Models.Car { Brand = brand, Color = color, Owner = owner };
+            var newCar = new Models.Car { Brand = brand, Color = color, CarPlate = carPlate };
             await _carRepository.Create(newCar);
             return newCar;
         }
@@ -22,7 +22,7 @@ namespace MongoDBCars.Services.Car
 
         public async Task<List<Models.Car>> FindAllCars() => await _carRepository.FindAll();
 
-        public async Task<Models.Car> UpdateCar(string carId, string color, string owner)
+        public async Task<Models.Car> UpdateCar(string carId, string carPlate, string color)
         {
             var foundedCar = await _carRepository.FindById(carId);
             if (foundedCar != null)
@@ -32,7 +32,7 @@ namespace MongoDBCars.Services.Car
                     Id = carId,
                     Brand = foundedCar.Brand,
                     Color = color,
-                    Owner = owner
+                    CarPlate = carPlate
                 };
                 await _carRepository.UpdateCar(carId, updatedCar);
 

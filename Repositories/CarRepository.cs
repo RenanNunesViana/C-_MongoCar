@@ -34,13 +34,22 @@ namespace MongoDBCars.Repositories
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                throw new Exception(ex.Message);
             }
         }
 
         public async Task DeleteCar(string id) => await _carCollection.DeleteOneAsync(c => c.Id!.Equals(id));
 
-        public async Task<List<Car>> FindAll() => await _carCollection.Find(_ => true).ToListAsync();
+        public async Task<List<Car>> FindAll() {
+            try
+            {
+                return await _carCollection.Find(_ => true).ToListAsync(); 
+            }catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return [];
+            }
+        }
 
         public Task<List<Car>> FindByAnyThing(Action<Car> func)
         {

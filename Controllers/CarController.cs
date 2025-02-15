@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDBCars.Models;
 using MongoDBCars.Services.Car;
@@ -11,6 +12,7 @@ namespace MongoDBCars.Controllers
         readonly ICarService _carService = carService;
 
         [HttpGet]
+        [Authorize]
         public Task<List<Car>> RequestAllCars()
 
         {
@@ -20,13 +22,13 @@ namespace MongoDBCars.Controllers
         [HttpPost]
         public async Task<Car> CreateCar([FromBody] Car car)
         {
-            return await _carService.CreateCar(car.Brand, car.Color, car.Owner);
+            return await _carService.CreateCar(car.Brand, car.CarPlate, car.Color);
         }
 
         [HttpPut]
         public async Task<Car> UpdateCar([FromQuery] string id, [FromBody] Car car)
         {
-            return await _carService.UpdateCar(id, car.Color, car.Owner);
+            return await _carService.UpdateCar(id, car.CarPlate, car.Color);
         }
 
         [HttpDelete]
