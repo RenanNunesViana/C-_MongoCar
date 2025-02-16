@@ -1,43 +1,72 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using MongoDBCars.Utils.Decorators;
-using System.ComponentModel.DataAnnotations;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using MongoDBCars.DTOs;
+using MongoDBCars.Enums;
+using MongoDBCars.Utils.Validations;
 
 namespace MongoDBCars.Models
 {
     [BsonIgnoreExtraElements]
     public class Car : Entity<Car>
     {
-        [RequiredField]
         public string Brand { get; set; } = null!;
-        [RequiredField]
         public string CarPlate { get; set; } = null!;
         public string? Color { get; set; } = null!;
 
-        public Car? Create(string? brand, string? carPlate, string? color)
+        public Car() { }
+
+        public static Result<Car> Create(string? brand, string? carPlate, string? color)
         {
-            Car car = new Car()
+
+            List<ApiError> errors = Validation(brand, carPlate, color);
+
+            if (errors.Count > 0)
+            {
+                return errors;
+            }
+
+            return new Car()
             {
                 Brand = brand!,
                 CarPlate = carPlate!,
                 Color = color
             };
+        }
 
-            var validatioResults = new List<ValidationResult>();
-            var isValid = Validator.TryValidateObject(car, new ValidationContext(car), validatioResults, true);
+        public Result<Car> Edit(string? brand, string? carPlate, string? color)
+        {
+            List<ApiError> errors = Validation(brand, carPlate, color);
 
-            if (!isValid)
+            if(errors.Count > 0) return errors;
+
+            Brand = brand!;
+            CarPlate = carPlate!;
+            Color = color!;
+            
+            return this;
+        }
+
+        private static List<ApiError> Validation(string? brand, string? carPlate, string? color)
+        {
+            List<ApiError> errors = [];
+            if (string.IsNullOrWhiteSpace(brand))
             {
-                foreach (var validationResult in validatioResults)
-                {
-                    Console.WriteLine(validationResult.ErrorMessage);
-                }
-                return null;
+                errors.Add(ApiError.BRAND_IS_REQUIRED);
             }
-            else
+            if (string.IsNullOrWhiteSpace(carPlate))
             {
-                return car;
+                errors.Add(ApiError.CARPLATE_IS_REQUIRED);
             }
+            else if (!carPlate.IsValidCarPlate())
+            {
+                errors.Add(ApiError.INVALID_CAR_PLATE);
+            }
+            // Maybe a enum?
+            //if (check if color is a valid color) 
+            //{
+            //    errors.Add(ApiError.INVALID_COLOR)
+            //}
+
+            return errors;
         }
     }
 }

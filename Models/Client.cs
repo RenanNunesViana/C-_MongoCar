@@ -1,40 +1,69 @@
-﻿using MongoDBCars.Utils.Decorators;
+﻿using MongoDBCars.DTOs;
+using MongoDBCars.Enums;
+using MongoDBCars.Utils.Validations;
 using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations;
 
 namespace MongoDBCars.Models
 {
     public class Client : Entity<Client>
     {
-        [RequiredField]
         public string Name { get; set; } = null!;
-        [RequiredField]
         public string Email { get; set; } = null!;
-        [RequiredField]
-        [PasswordValidation]
         public string Password { get; set; } = null!;
         public Collection<Car> Cars { get; set; } = [];
 
-        public Client? Create(string? name, string? email, string? password)
+        private Client() { }
+
+        public Result<Client>? Create(string? name, string? email, string? password)
         {
+
+            List<ApiError> errors = Validation(name, email, password);
+            if (errors.Count > 0)
+            {
+                return errors;
+            }
+
             Client client = new()
             {
                 Name = name!,
                 Email = email!,
                 Password = password!
             };
+            return client;
+        }
 
-            var validationResults = new List<ValidationResult>();
-            var isValid = Validator.TryValidateObject(client, new ValidationContext(client), validationResults, true);
+        private static List<ApiError> Validation(string? name, string? email, string? password)
+        {
+            List<ApiError> errors = [];
 
-            if (!isValid)
+            if (string.IsNullOrWhiteSpace(name))
             {
-                foreach (var validationResult in validationResults) Console.WriteLine(validationResult.ErrorMessage);
-                return null;
+                errors.Add(ApiError.CLIENT_NAME_EMPTY);
             }
-            else { 
-                return client;
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                errors.Add(ApiError.CLIENT_EMAIL_EMPTY);
             }
+            else
+            {
+                if (!email.IsValidEmail())
+                {
+                    errors.Add(ApiError.INVALID_EMAIL);
+                }
+            }
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                errors.Add(ApiError.PASSWORD_REQUIRED);
+            }
+            else
+            {
+                if (!password.IsValidPassword())
+                {
+                    errors.Add(ApiError.STRONG_PASSWORD_REQUIRED);
+                }
+            }
+
+            return errors;
         }
     }
 }

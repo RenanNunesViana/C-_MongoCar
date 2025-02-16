@@ -13,22 +13,31 @@ namespace MongoDBCars.Controllers
 
         [HttpGet]
         [Authorize]
-        public Task<List<Car>> RequestAllCars()
-
+        public async Task<ActionResult<List<Car>>> RequestAllCars()
         {
-            return _carService.FindAllCars();
+            var carsResult = await _carService.FindAllCars();
+            if (carsResult.ItsFailure)
+            {
+                return BadRequest(carsResult.Errors);
+            }
+            return Ok(carsResult.Value);
         }
 
         [HttpPost]
-        public async Task<Car> CreateCar([FromBody] Car car)
+        public async Task<ActionResult<Car?>> CreateCar([FromBody] Car car)
         {
-            return await _carService.CreateCar(car.Brand, car.CarPlate, car.Color);
+            var createResult = await _carService.CreateCar(car.Brand, car.CarPlate, car.Color);
+
+            if (createResult.ItsFailure) return BadRequest(createResult.Errors);
+            return Ok(createResult.Value);
         }
 
         [HttpPut]
-        public async Task<Car> UpdateCar([FromQuery] string id, [FromBody] Car car)
+        public async Task<ActionResult<Car>> UpdateCar([FromQuery] string id, [FromBody] Car car)
         {
-            return await _carService.UpdateCar(id, car.CarPlate, car.Color);
+            var updateResult = await _carService.UpdateCar(id, car.CarPlate, car.Color);
+            if(updateResult.ItsFailure) return BadRequest(updateResult.Errors);
+            return Ok(updateResult.Value);
         }
 
         [HttpDelete]

@@ -1,5 +1,8 @@
 ﻿
+using MongoDBCars.DTOs;
+using MongoDBCars.Enums;
 using MongoDBCars.Repositories;
+using CarType = MongoDBCars.Models.Car;
 
 namespace MongoDBCars.Services.Car
 {
@@ -8,11 +11,19 @@ namespace MongoDBCars.Services.Car
 
         private readonly ICarRepository _carRepository = carRepository;
 
-        public async Task<Models.Car> CreateCar(string brand, string carPlate, string color)
+        public async Task<Result<CarType>> CreateCar(string? brand, string? carPlate, string? color)
         {
-            var newCar = new Models.Car { Brand = brand, Color = color, CarPlate = carPlate };
-            await _carRepository.Create(newCar);
-            return newCar;
+            var newCarResult = CarType.Create(brand, carPlate, color);
+            if (newCarResult.ItsFailure)
+            {
+                return newCarResult.Errors;
+            }
+            else
+            {
+                var newCar = newCarResult.Value;
+                await _carRepository.Create(newCar!);
+                return newCar!;
+            }
         }
 
         public async Task DeleteCar(string carId)
@@ -20,28 +31,29 @@ namespace MongoDBCars.Services.Car
             await _carRepository.DeleteCar(carId);
         }
 
-        public async Task<List<Models.Car>> FindAllCars() => await _carRepository.FindAll();
+        public async Task<Result<List<CarType>>> FindAllCars() => await _carRepository.FindAll();
 
-        public async Task<Models.Car> UpdateCar(string carId, string carPlate, string color)
+        public async Task<Result<CarType>> UpdateCar(string carId, string? carPlate, string? color)
         {
-            var foundedCar = await _carRepository.FindById(carId);
-            if (foundedCar != null)
-            {
-                var updatedCar = new Models.Car
-                {
-                    Id = carId,
-                    Brand = foundedCar.Brand,
-                    Color = color,
-                    CarPlate = carPlate
-                };
-                await _carRepository.UpdateCar(carId, updatedCar);
 
-                return updatedCar;
-            }
-            else
+            List<ApiError> errors = [];
+
+            var foundedCar = await _carRepository.FindById(carId);
+            if (foundedCar == null)
             {
-                throw new NotImplementedException($"Carro com id {carId} não encontrado");
+                errors.Add(ApiError.CAR_NOT_FOUND_ID);
+                return errors;
             }
+
+            var carEditedResult = foundedCar.Edit(foundedCar.Brand, carPlate, color);
+
+            if (carEditedResult.ItsFailure) errors.AddRange(carEditedResult.Errors);
+
+            if (errors.Count > 0) return errors;
+
+            await _carRepository.UpdateCar(carId, carEditedResult.Value!);
+
+            return carEditedResult.Value!;
 
         }
     }
