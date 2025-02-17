@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MongoDBCars.DTOs;
 using MongoDBCars.Models;
 using MongoDBCars.Services.Car;
 
@@ -18,9 +19,9 @@ namespace MongoDBCars.Controllers
             var carsResult = await _carService.FindAllCars();
             if (carsResult.ItsFailure)
             {
-                return BadRequest(carsResult.Errors);
+                return BadRequest(ApiResponse<List<Car>>.GenerateFailure(carsResult.Errors));
             }
-            return Ok(carsResult.Value);
+            return Ok(ApiResponse<List<Car>>.GenerateSuccess(carsResult.Value!));
         }
 
         [HttpPost]
@@ -28,16 +29,16 @@ namespace MongoDBCars.Controllers
         {
             var createResult = await _carService.CreateCar(car.Brand, car.CarPlate, car.Color);
 
-            if (createResult.ItsFailure) return BadRequest(createResult.Errors);
-            return Ok(createResult.Value);
+            if (createResult.ItsFailure) return BadRequest(ApiResponse<Car>.GenerateFailure(createResult.Errors));
+            return Ok(ApiResponse<Car>.GenerateSuccess(createResult.Value!));
         }
 
         [HttpPut]
         public async Task<ActionResult<Car>> UpdateCar([FromQuery] string id, [FromBody] Car car)
         {
             var updateResult = await _carService.UpdateCar(id, car.CarPlate, car.Color);
-            if(updateResult.ItsFailure) return BadRequest(updateResult.Errors);
-            return Ok(updateResult.Value);
+            if(updateResult.ItsFailure) return BadRequest(ApiResponse<Car>.GenerateFailure(updateResult.Errors));
+            return Ok(ApiResponse<Car>.GenerateSuccess(updateResult.Value!));
         }
 
         [HttpDelete]
